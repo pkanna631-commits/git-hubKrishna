@@ -1,0 +1,140 @@
+/* High-Fashion AI Personal Stylist Custom CSS */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-serif: 'Cinzel', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --gold-accent: #D4AF37;
+  --rose-gold: #B76E79;
+  --champagne: #F7E7CE;
+  --warm-bg: #FAF8F5;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--warm-bg);
+  color: #1c1917;
+  overflow-x: hidden;
+}
+
+.font-serif-fashion {
+  font-family: var(--font-serif);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+/* Glassmorphism Card Style */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 8px 16px -4px rgba(0, 0, 0, 0.03);
+}
+
+/* Editorial Gradient Text */
+.editorial-gradient-text {
+  background: linear-gradient(135deg, #1c1917 0%, #44403c 40%, #9a3412 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #78350f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animated Scanner Effect */
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #ea580c, #f59e0b, transparent);
+  box-shadow: 0 0 15px #ea580c, 0 0 30px #f59e0b;
+  animation: scan 2.2s ease-in-out infinite alternate;
+  z-index: 20;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 96%; }
+}
+
+/* Glowing Pulsing Aura */
+.glow-aura {
+  position: relative;
+}
+.glow-aura::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, #fdba74, #f472b6, #60a5fa);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(12px);
+  transition: opacity 0.3s ease;
+}
+.glow-aura:hover::before {
+  opacity: 0.8;
+}
+
+/* Color Swatch Card Hover */
+.swatch-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.swatch-card:hover {
+  transform: scale(1.05);
+}
+
+/* Shimmer Loading Skeleton */
+.shimmer {
+  background: linear-gradient(90deg, #f5f5f4 25%, #e7e5e4 50%, #f5f5f4 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Print Optimization for Exporting Style Card */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .glass-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
