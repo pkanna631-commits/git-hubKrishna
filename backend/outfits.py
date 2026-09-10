@@ -366,12 +366,10 @@ class OutfitGenerator:
 
         outfits_list = [casual, smart_casual, formal, party, streetwear, traditional, wedding, college, summer, winter]
 
-        # Keep the uploaded image as a reference for the prompt, but preserve a
-        # category-specific fashion image for the visual outfit preview.
+        # Preserve the uploaded person only as a reference image, while keeping
+        # distinct AI-generated fashion visuals for each outfit category.
         if image_base64:
             for outfit in outfits_list:
-                # Keep the uploaded person as the subject in every personalized result.
-                outfit["ai_generated_image"] = image_base64
                 outfit["reference_image"] = image_base64
                 outfit["ai_prompt"] = (
                     f"Fashion try-on portrait using the uploaded person as a visual reference, "
