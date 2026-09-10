@@ -134,18 +134,35 @@
           cvs.width = img.width; cvs.height = img.height;
           ctx.drawImage(img, 0, 0);
 
-          let bestSkinHex = null;
-          for (let y = 0.25; y <= 0.65; y += 0.08) {
-            for (let x = 0.35; x <= 0.65; x += 0.08) {
-              const p = ctx.getImageData(Math.floor(img.width * x), Math.floor(img.height * y), 1, 1).data;
-              if (p[0] > 60 && p[0] > p[1] && p[1] > p[2] && (p[0] - p[1]) > 8) {
-                bestSkinHex = `#${((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1)}`;
-                break;
+          let skinPixels = [];
+          const xStep = Math.max(4, Math.floor(img.width / 30));
+          const yStep = Math.max(4, Math.floor(img.height / 30));
+
+          for (let y = 0; y < img.height; y += yStep) {
+            for (let x = 0; x < img.width; x += xStep) {
+              const p = ctx.getImageData(x, y, 1, 1).data;
+              const r = p[0], g = p[1], b = p[2];
+              const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+              const delta = Math.max(r, g, b) - Math.min(r, g, b);
+              const notObviousBackground = brightness > 40 && brightness < 245 && delta > 12 && (r > 20) && (g > 10) && (b > 8);
+              if (notObviousBackground) {
+                skinPixels.push([r, g, b]);
               }
             }
-            if (bestSkinHex) break;
           }
-          if (!bestSkinHex) bestSkinHex = "#D4A373";
+
+          let bestSkinHex = null;
+          if (skinPixels.length) {
+            const avg = skinPixels.reduce((acc, p) => {
+              acc.r += p[0]; acc.g += p[1]; acc.b += p[2]; return acc;
+            }, { r: 0, g: 0, b: 0 });
+            const count = skinPixels.length;
+            const r = Math.round(avg.r / count);
+            const g = Math.round(avg.g / count);
+            const b = Math.round(avg.b / count);
+            bestSkinHex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+          }
+
           setSampledHex(bestSkinHex);
           try { setBase64Data(cvs.toDataURL('image/jpeg', 0.85)); } catch(e){}
         };
@@ -274,7 +291,7 @@
 
       const triggerAnalysis = (fileToUpload = file, hexOverride = sampledHex) => {
         setAnalyzing(true);
-        const hex = hexOverride || sampledHex || "#D4A373";
+        const hex = hexOverride || sampledHex;
 
         const formData = new FormData();
         if (fileToUpload) formData.append('file', fileToUpload);

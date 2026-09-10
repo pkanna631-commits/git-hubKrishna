@@ -94,22 +94,33 @@ class ImageAnalyzer:
         """
         pixels = []
 
+        def sample_image_grid(img_width: int, img_height: int, x_ranges, y_ranges, sampler):
+            for min_x, max_x in x_ranges:
+                for min_y, max_y in y_ranges:
+                    step_x = max(1, (max_x - min_x) // 35)
+                    step_y = max(1, (max_y - min_y) // 35)
+                    for y in range(min_y, max_y, step_y):
+                        for x in range(min_x, max_x, step_x):
+                            pixel = sampler(x, y, img_width, img_height)
+                            if pixel is not None:
+                                r, g, b = pixel
+                                if cls.is_skin_pixel(r, g, b):
+                                    pixels.append((r, g, b))
+
         # 1. Try Pillow decoding
         if PIL_AVAILABLE and image_bytes:
             try:
                 img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
                 w, h = img.size
-                # Sample central face area (30% to 70% width, 25% to 65% height)
-                min_x, max_x = int(w * 0.30), int(w * 0.70)
-                min_y, max_y = int(h * 0.25), int(h * 0.65)
-                step_x = max(1, (max_x - min_x) // 40)
-                step_y = max(1, (max_y - min_y) // 40)
+                face_ranges = [(int(w * 0.20), int(w * 0.80)), (int(w * 0.30), int(w * 0.70))]
+                face_ys = [(int(h * 0.15), int(h * 0.85)), (int(h * 0.20), int(h * 0.75))]
 
-                for y in range(min_y, max_y, step_y):
-                    for x in range(min_x, max_x, step_x):
-                        r, g, b = img.getpixel((x, y))
-                        if cls.is_skin_pixel(r, g, b):
-                            pixels.append((r, g, b))
+                def sampler(x, y, _, __):
+                    return img.getpixel((x, y))
+
+                sample_image_grid(w, h, face_ranges, face_ys, sampler)
+                if not pixels:
+                    sample_image_grid(w, h, [(0, w)], [(0, h)], sampler)
             except Exception:
                 pass
 
@@ -120,16 +131,16 @@ class ImageAnalyzer:
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 if img is not None:
                     h, w, _ = img.shape
-                    min_x, max_x = int(w * 0.30), int(w * 0.70)
-                    min_y, max_y = int(h * 0.25), int(h * 0.65)
-                    step_x = max(1, (max_x - min_x) // 40)
-                    step_y = max(1, (max_y - min_y) // 40)
+                    face_ranges = [(int(w * 0.20), int(w * 0.80)), (int(w * 0.30), int(w * 0.70))]
+                    face_ys = [(int(h * 0.15), int(h * 0.85)), (int(h * 0.20), int(h * 0.75))]
 
-                    for y in range(min_y, max_y, step_y):
-                        for x in range(min_x, max_x, step_x):
-                            b_val, g_val, r_val = img[y, x]
-                            if cls.is_skin_pixel(int(r_val), int(g_val), int(b_val)):
-                                pixels.append((int(r_val), int(g_val), int(b_val)))
+                    def sampler(x, y, _, __):
+                        b_val, g_val, r_val = img[y, x]
+                        return (int(r_val), int(g_val), int(b_val))
+
+                    sample_image_grid(w, h, face_ranges, face_ys, sampler)
+                    if not pixels:
+                        sample_image_grid(w, h, [(0, w)], [(0, h)], sampler)
             except Exception:
                 pass
 
@@ -164,18 +175,26 @@ class ImageAnalyzer:
 
     @staticmethod
     def is_skin_pixel(r: int, g: int, b: int) -> bool:
-        """Peer et al. skin pixel classification rules"""
-        if r < 40 or g < 30 or b < 20:
+        """Broader skin-pixel detection so warm, cool, and neutral undertones are all recognized."""
+        if not (20 <= r <= 250 and 15 <= g <= 250 and 10 <= b <= 250):
             return False
-        if r <= g or g <= b:
+
+        # Reject near-grayscale / overly washed-out pixels and very dark shadows.
+        if abs(r - g) < 5 and abs(r - b) < 8 and abs(g - b) < 8:
             return False
-        if abs(r - g) < 10:
+
+        if r < 30 and g < 30 and b < 25:
             return False
-        if (max(r, g, b) - min(r, g, b)) < 12:
+
+        if max(r, g, b) - min(r, g, b) < 8:
             return False
-        
+
         luminance = 0.299 * r + 0.587 * g + 0.114 * b
-        if luminance > 250 or luminance < 30:
+        if luminance > 245 or luminance < 20:
+            return False
+
+        # Allow cool skin (higher blue component) and neutral skin in addition to warm skin.
+        if r < g and r < b:
             return False
 
         return True
